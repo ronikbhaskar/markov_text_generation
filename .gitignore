@@ -105,6 +105,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env_markov
+env_markov/
 .env
 .venv
 env/
