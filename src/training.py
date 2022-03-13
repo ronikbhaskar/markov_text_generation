@@ -19,7 +19,7 @@ def unff():
     markov = AssociationTable()
     markov.train(text_list)
     markov.update_probabilities()
-    new_text = markov.gen_text(300)
+    new_text = markov.gen_text(500)
     print(new_text)
 
 def main():
