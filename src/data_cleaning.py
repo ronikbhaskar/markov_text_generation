@@ -39,6 +39,67 @@ def clean_aow(text : str) -> List[str]:
     text_list = list(filter(lambda x: len(x) > 0, text_list))
     return text_list
 
+def clean_motcp(text : str, names : Dict[str, str]) -> List[str]:
+    """
+    seems fun
+    """
+
+    # Roman-numeric headers
+    text = re.sub(r"\n+[IVXL]+\.", "\n", text)
+    # numeric headers
+    text = re.sub(r"\n+[\d,]+\.+", "\n", text)
+    # end of sentence punctuation
+    text = re.sub(r"[\.\?!;]+", " . ", text)
+    # end of phrase punctuation
+    text = re.sub(r"--|[,:()]+", " , ", text)
+    # remove text in parentheses
+    text = re.sub(r"\([^\)]+\)", "", text)
+    text = re.sub(r"\[[^\]]+\]", "", text)
+    # get rid of odd marks
+    text = re.sub(r"\"|\*|†|‡", r"", text)
+    # fix capitalization
+    text = text.lower()
+    text = re.sub(" i ", " I ", text)
+    # get rid of repeated spaces
+    text = re.sub("[ \t\n]+", " ", text) # not raw regex
+
+    for key, val in names.items():
+        text = text.replace(" " + key, " " + val) 
+
+    # make list
+    text_list = text.split(" ")
+    text_list = list(filter(lambda x: len(x) > 0, text_list))
+    return text_list
+
+def clean_tar(text : str) -> List[str]:
+    """
+    general cleaning rules
+    I still get rid of quotation marks, but there's probably a better way to handle them
+    """
+
+    # end of sentence punctuation
+    text = re.sub(r"[\.\?!;]+", " . ", text)
+    # end of phrase punctuation
+    text = re.sub(r"--|[,:()]+", " , ", text)
+    # get rid of repeated spaces
+    text = re.sub("[ \t\n]+", " ", text) # not raw regex
+    # get rid of quotes
+    text = re.sub(r"\"", r"", text)
+    # fix capitalization
+    text = text.lower()
+    text = re.sub(" i ", " I ", text)
+    text = re.sub(" i'", " I'", text)
+    text = re.sub(" u \. s \. ", " U.S. ", text)
+    
+    text = re.sub("( \.)+", " .", text)
+    text = re.sub("( ,)+", " ,", text)
+    text = re.sub(" , \.", " .", text)
+
+    # make list
+    text_list = text.split(" ")
+    text_list = list(filter(lambda x: len(x) > 0, text_list))
+    return text_list
+
 def clean_generic(text : str) -> List[str]:
     """
     general cleaning rules
@@ -56,6 +117,7 @@ def clean_generic(text : str) -> List[str]:
     # fix capitalization
     text = text.lower()
     text = re.sub(" i ", " I ", text)
+    text = re.sub(" i'", " I'", text)
     # make list
     text_list = text.split(" ")
     text_list = list(filter(lambda x: len(x) > 0, text_list))

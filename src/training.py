@@ -1,5 +1,4 @@
 
-from ast import For
 import data_cleaning
 from markov_text import AssociationTable, FormattingRule
 
@@ -50,9 +49,48 @@ def himym():
     markov.update_probabilities()
     print(markov.gen_text(3000))
 
+def motcm():
+    with open("sample_text/motcp.txt") as motcp:
+        text = motcp.read()
+    
+    propers = [
+        "Europe", 
+        "European",
+        "Pope","Tsar", "Parliament",
+        "Metternich", "Ledru-Rollin", "Engels", "Louis", "Blanc", "Charles", "Fourier", 
+        "Guizot", "French", "Radicals", "German",
+        "English", "French", "German", "Italian", "Flemish", "Danish",
+        "Communist","Communism", "Réformist", "Chartist",
+        "America", "Cape", "Italy", "France", "Switzerland", "Poland", "Germany", 
+    ]
+    names = {name.lower() : name for name in propers}
+
+    formatting_rules = {
+        ".": FormattingRule(1, ".", newline_prob=0.2),
+        ",": FormattingRule(2, ",", do_caps=False)
+    }
+    tokens = data_cleaning.clean_motcp(text, names)
+    markov = AssociationTable(formatting_rules=formatting_rules)
+    markov.train(tokens)
+    markov.update_probabilities()
+    print(markov.gen_text(4000))
+
+def tar():
+    with open("sample_text/tar.txt") as tar:
+        text = tar.read()
+
+    formatting_rules = {
+        ".": FormattingRule(1, ".", newline_prob=0.3),
+        ",": FormattingRule(2, ",", do_caps=False)
+    }
+    tokens = data_cleaning.clean_tar(text)
+    markov = AssociationTable(formatting_rules=formatting_rules)
+    markov.train(tokens)
+    markov.update_probabilities()
+    print(markov.gen_text(4000))
 
 def main():
-    himym()
+    tar()
 
 if __name__ == "__main__":
     main()
