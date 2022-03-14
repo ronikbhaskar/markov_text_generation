@@ -1,7 +1,27 @@
 
 from random import uniform, choice
-from enum import Enum
-import re
+from urllib.parse import _NetlocResultMixinStr
+
+
+class FormattingRule:
+
+    def __init__(self, code, symbol, do_caps = True, 
+                 preceding_space = False, is_delim = False, newline_prob = 0):
+        """
+        code : integer representation
+        symbol : str
+        do_caps : bool
+        preceding_space : bool
+        is_delim : bool
+        newline_prob : float
+        """
+
+        self.code = code
+        self.symbol = symbol
+        self.do_caps = do_caps
+        self.preceding_space = preceding_space
+        self.is_delim = is_delim
+        self.newline_prob = newline_prob
 
 class ListEntry:   
 
@@ -35,7 +55,7 @@ class ListEntry:
         """
 
         if not total_occur:
-            printf("ERROR: update_probability: total_occur is 0")
+            print("ERROR: update_probability: total_occur is 0")
             self.probability = 0
         else:
             self.probability = self.frequency / total_occur
@@ -103,12 +123,12 @@ class AssociationTable:
     EOS = 1 # end of sentence
     EOP = 2 # end of phrase  
 
-    SYNTAX_TABLE = {
-        ".": EOS,
-        ",": EOP
+    GEN_FORMATTING_RULES = {
+        ".": FormattingRule(1, "."),
+        ",": FormattingRule(2, ",", do_caps=False)
     }
 
-    def __init__(self):
+    def __init__(self, formatting_rules = GEN_FORMATTING_RULES):
         """
         If you're reading this, hello
         """
@@ -116,6 +136,7 @@ class AssociationTable:
         self.table = {}
         self.recalculated_probabilities = False
         self.words_analyzed = 0
+        self.formatting_rules = formatting_rules
 
     def add_word(self, word, next_word):
         """
@@ -156,8 +177,8 @@ class AssociationTable:
         
         return word[0].upper() + word[1:]
 
-    def get_syntax_translation(self, word):
-        return AssociationTable.SYNTAX_TABLE.get(word, word)
+    def get_formatting_translation(self, word):
+        return self.formatting_rules.get(word, word)
     
     def gen_text(self, num_words : int, start = None, newline_prob = 0.3):
         """
@@ -184,29 +205,28 @@ class AssociationTable:
         out = self.capitalize(start)
         do_caps = False
         preceding_space = True
-        did_newline = False
+        did_delim = False
         delim = " "
 
         for _ in range(num_words):
             next_word = self.table[prev_word].next_word()
             prev_word = next_word
-            if did_newline:
-                delim = "\n\n"
+            if did_delim:
+                delim = ""
             else:
                 delim = " "
-            did_newline = False
+            did_delim = False
 
-            if next_word == AssociationTable.EOS:
-                next_word = "."
-                did_newline = uniform(0,1) < newline_prob
-                preceding_space = False
-                do_caps = True
-            elif next_word == AssociationTable.EOP:
-                next_word = ","
-                preceding_space = False
-            elif next_word == "\n":
-                preceding_space = False
-                do_caps = True
+            next_word = self.get_formatting_translation(next_word)
+
+            if type(next_word) is FormattingRule:
+                did_delim = next_word.is_delim 
+                preceding_space = next_word.preceding_space
+                do_caps = next_word.do_caps
+                add_newline = uniform(0,1) < next_word.newline_prob
+                next_word = next_word.symbol
+                if add_newline:
+                    next_word += "\n"
             elif do_caps:
                 next_word = self.capitalize(next_word)
                 do_caps = False
@@ -244,13 +264,10 @@ class AssociationTable:
             if len(word) == 0 or len(next_word) == 0:
                 continue
 
-            word = self.get_syntax_translation(word)
-
-            next_word = self.get_syntax_translation(next_word)
-
             self.add_word(word, next_word)
 
         if cyclic:
-            word = self.get_syntax_translation(training_text_list[-1])
-            next_word = self.get_syntax_translation(training_text_list[0])
-            self.add_word(word, next_word)
+            self.add_word(training_text_list[-1], training_text_list[0])
+            # word = self.get_syntax_translation(training_text_list[-1])
+            # next_word = self.get_syntax_translation(training_text_list[0])
+            # self.add_word(word, next_word)
