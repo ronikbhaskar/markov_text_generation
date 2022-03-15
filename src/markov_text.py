@@ -171,7 +171,7 @@ class AssociationTable:
         capitalization for English
         """
 
-        if len(word) == 0 or word == AssociationTable.EOS or word == AssociationTable.EOP:
+        if len(word) == 0:
             print(f"[{word}]")
             print("ERROR: bad word for capitalization")
         
