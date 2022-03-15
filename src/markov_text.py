@@ -1,6 +1,5 @@
 
 from random import uniform, choice
-from urllib.parse import _NetlocResultMixinStr
 
 
 class FormattingRule:
@@ -120,9 +119,6 @@ class AssociationEntry:
 
 class AssociationTable:
 
-    EOS = 1 # end of sentence
-    EOP = 2 # end of phrase  
-
     GEN_FORMATTING_RULES = {
         ".": FormattingRule(1, "."),
         ",": FormattingRule(2, ",", do_caps=False)
@@ -191,13 +187,13 @@ class AssociationTable:
         if start == AssociationTable.EOS or start == AssociationTable.EOP:
             print("ERROR: start is a Syntax, not word")
 
-        if start == AssociationTable.EOS or start == AssociationTable.EOP or start == None or start not in self.table:
+        if start == None or start not in self.table:
             for word in self.table:
-                if word != AssociationTable.EOS and word != AssociationTable.EOP and word != "\n":
+                if type(word) is not FormattingRule:
                     start = word
                     break
             else:
-                print("ERROR: only AssociationTable.EOS and AssociationTable.EOP in model")
+                print("ERROR: only FormattingRules in model")
                 return None
 
         prev_word = start
@@ -268,6 +264,3 @@ class AssociationTable:
 
         if cyclic:
             self.add_word(training_text_list[-1], training_text_list[0])
-            # word = self.get_syntax_translation(training_text_list[-1])
-            # next_word = self.get_syntax_translation(training_text_list[0])
-            # self.add_word(word, next_word)
