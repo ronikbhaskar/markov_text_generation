@@ -123,6 +123,138 @@ def clean_generic(text : str) -> List[str]:
     text_list = list(filter(lambda x: len(x) > 0, text_list))
     return text_list
 
+def find_id(name, ids_names, name_to_id_dict):
+    for row in ids_names[1:]:
+        id_val, new_name = row[0], row[1]
+        if new_name == name:
+            name_to_id_dict[name] = id_val
+            return name_to_id_dict
+    
+    print(f"ERROR: couldn't find id for name {name}")
+    return name_to_id_dict
+
+def new_clean_discord(text : str, members = None):
+    """
+    more formatting rules. I'm definitely not using a scraper
+    """
+
+    lines = text.split("\n")
+    lines_len = len(lines)
+    newlines = []
+    members_dict = {}
+    for i in range(lines_len):
+        line = lines[i]
+        
+        try:
+            colon_idx = line.index(":")
+        except ValueError:
+            # expected to happen
+            continue
+
+        header = line[:colon_idx + 1]
+        body = line[colon_idx + 1:]
+
+        # remove #\d{4}
+        header = re.sub(r"#\d{4}", "", header)
+        if members is not None:
+            name = header[:-1]
+            if name not in members_dict:
+                members_dict = find_id(name, members, members_dict)
+            header = members_dict[name] + ":"
+
+        body = body.lower()
+
+        line = header + body
+        newlines.append(line)
+
+    text = "\n".join(newlines) + "\n"
+    # end of sentence punctuation
+
+    text = re.sub("\.+ ", " . ", text)
+    text = re.sub("\?+ ", " ? ", text)
+    text = re.sub("!+ ", " ! ", text)
+    text = re.sub(r"\.+\n", " . \n", text)
+    text = re.sub(r"\?+\n", " ? \n", text)
+    text = re.sub(r"!+\n", " ! \n", text)
+    # end of phrase punctuation
+    text = re.sub(r"--|,+", " , ", text)
+
+    # remove custom emoji
+    text = re.sub(r"<:[-_\w^>]+:\d+>", "", text)
+
+    # fix @ mentions
+    text = re.sub(r"<@[!\&]\d{18}>", "@"+r"\g<0>" + "@", text)
+    text = re.sub(r"(<@[!\&])|(>@)", "", text)
+
+    # fix # mentions
+    text = re.sub(r"<#\d{18}>", "#"+r"\g<0>" + "#", text)
+    text = re.sub(r"(<#)|(>#)", "", text)
+    
+    text = re.sub("\n+", "\n", text)
+    text = re.sub("\n", " \n ", text)
+
+    text = re.sub("[ \t]+", " ", text)
+    return text.split(" ")
+
+def clean_discord(text : str):
+    """
+    this is gonna be a lot of lowercase
+    """
+
+    lines = text.split("\n")
+    lines_len = len(lines)
+    newlines = []
+    for i in range(lines_len):
+        line = lines[i]
+
+        if line[0] != "[":
+            # not message
+            continue
+
+        try:
+            timestamp_end = line.index("]")
+        except ValueError as e:
+            print("unexpected line starting with \[ with out \]")
+            continue
+
+        line = line[timestamp_end + 2:]
+        
+        try:
+            colon_idx = line.index(":")
+        except ValueError:
+            # expected to happen
+            continue
+
+        header = line[:colon_idx + 1]
+        body = line[colon_idx + 1:]
+
+        # remove timestamp in brackets
+        header = re.sub(r"\[[^\]]+\]", "", header)
+        # no spaces between parts of username
+        header = re.sub(" ", "_", header)
+        
+        header = re.sub("[\.\?!,]+", "", header)
+
+        body = body.lower()
+
+        line = header + body
+        newlines.append(line)
+
+    text = "\n".join(newlines)
+    # end of sentence punctuation
+    text = re.sub(r"\.+", " . ", text)
+    text = re.sub(r"\?+", " ? ", text)
+    text = re.sub(r"!+", " ! ", text)
+    # end of phrase punctuation
+    text = re.sub(r"--|,+", " , ", text)
+    
+    text = re.sub("\n+", "\n", text)
+    text = re.sub("\n", " \n ", text)
+
+    text = re.sub("[ \t]+", " ", text)
+    return text.split(" ")
+
+
 def clean_script(text : str, names : Dict[str, str]) -> List[str]:
     # asterisks at end of lines
     text = re.sub(r"\*", "\n", text)
@@ -200,7 +332,10 @@ def clean_script(text : str, names : Dict[str, str]) -> List[str]:
     tokens = list(filter(lambda x: len(x) > 0, tokens))
     return tokens
     
-        
-
-
-
+def clean_overheard(text : str) -> List[str]:
+    text = re.sub('"', '', text)
+    text = re.sub(r"\s+", " ", text)
+    text = text.lower()
+    tokens = text.split(" ")
+    tokens = list(filter(lambda x: len(x) > 0, tokens))
+    return tokens

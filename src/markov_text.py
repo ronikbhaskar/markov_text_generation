@@ -176,16 +176,13 @@ class AssociationTable:
     def get_formatting_translation(self, word):
         return self.formatting_rules.get(word, word)
     
-    def gen_text(self, num_words : int, start = None, newline_prob = 0.3):
+    def gen_text(self, num_words : int, start = None, caps_first = True):
         """
         num_words : int
         start : word, not Syntax
         newline_prob : float, probability that end of sentence will result in newline
         generates that many words, Syntax not included
         """
-
-        if start == AssociationTable.EOS or start == AssociationTable.EOP:
-            print("ERROR: start is a Syntax, not word")
 
         if start == None or start not in self.table:
             for word in self.table:
@@ -198,7 +195,10 @@ class AssociationTable:
 
         prev_word = start
 
-        out = self.capitalize(start)
+        if caps_first:
+            start = self.capitalize(start)
+            
+        out = start
         do_caps = False
         preceding_space = True
         did_delim = False
