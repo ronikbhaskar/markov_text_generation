@@ -134,6 +134,30 @@ class AssociationTable:
         self.words_analyzed = 0
         self.formatting_rules = formatting_rules
 
+    def combine(self, assoc_table):
+        """
+        assoc_table : AssociationTable
+        Returns new AssociationTable with combined graphs from self and assoc_table
+        does not modify self
+        formatting rules of self take precedence over assoc_table
+        """
+
+        f_rules = {**assoc_table.formatting_rules, **self.formatting_rules}
+        new_table = AssociationTable(formatting_rules=f_rules)
+
+        for word, entry in self.table.items():
+            for next_word, list_entry in entry.assoc_list.items():
+                for _ in range(list_entry.frequency):
+                    new_table.add_word(word, next_word)
+
+        for word, entry in assoc_table.table.items():
+            for next_word, list_entry in entry.assoc_list.items():
+                for _ in range(list_entry.frequency):
+                    new_table.add_word(word, next_word)
+
+        return new_table
+
+
     def add_word(self, word, next_word):
         """
         word : str or Syntax
